@@ -161,15 +161,18 @@
     const medianText =
       medianPrice != null ? currencyFormatter.format(medianPrice) : "—";
     const averageText =
-      averagePrice != null ? currencyFormatter.format(averagePrice) : "—";
+      averagePrice != null ? currencyFormatter.format(averagePrice) : null;
     const typeText = propertyType ? propertyType : "Any";
+    const medianBadgeText =
+      averageText && medianText !== "—"
+        ? `${medianText} · Avg ${averageText}`
+        : medianText;
 
     summaryEl.innerHTML = [
-      badge("Suburb", safeSuburb, "bg-secondary"),
-      badge("Listings", safeCount, "bg-primary"),
-      badge("Median Price", medianText, "bg-success"),
-      badge("Average Price", averageText, "bg-info text-dark"),
-      badge("Type", typeText, "bg-dark"),
+      badge("Suburb", safeSuburb, "badge-ink"),
+      badge("Listings", safeCount, "badge-cyan"),
+      badge("Median Price", medianBadgeText, "badge-green"),
+      badge("Type", typeText, "badge-dark"),
     ].join(" ");
   };
 
