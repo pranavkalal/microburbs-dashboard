@@ -1,6 +1,6 @@
 # Microburbs Property Explorer
 
-This dashboard surfaces investor-friendly insights from the Microburbs Sandbox, letting you explore listing volumes and price signals for Australian suburbs. It normalizes the upstream schema into a consistent array so the UI can render defensively even when fields differ between responses.
+This dashboard surfaces investor-friendly insights from the Microburbs Sandbox, letting you explore listing volumes and price signals for Australian suburbs. It normalizes the upstream schema into a consistent array so the UI can render defensively even when fields differ between responses. The first end-to-end iteration was designed and built in roughly one hour.
 
 ## Run Locally
 ```bash
@@ -10,6 +10,11 @@ pip install -r requirements.txt
 python app.py
 ```
 Navigate to `http://127.0.0.1:5000` and start querying suburbs.
+
+## UI Preview
+![Overview](docs/overview.png)
+![Summary Badges](docs/summary-badges.png)
+![Property Grid](docs/property-grid.png)
 
 ## What You’ll See
 - Sticky summary badges with listing count, suburb name, median price (with average), and active property type.
