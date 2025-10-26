@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Microburbs Property Explorer</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    >
+    <style>
+      :root {
+        --ink: #151c2f;
+        --cyan: #1ab6ff;
+        --green: #43c377;
+        --dark: #1f2333;
+        --bg-plate: #ffffff;
+        --bg-body: #f4f7fb;
+        --border-soft: rgba(21, 28, 47, 0.08);
+        --shadow-soft: 0 20px 45px rgba(15, 24, 44, 0.08);
+        --shadow-hover: 0 18px 35px rgba(21, 35, 70, 0.16);
+      }
+
+      body {
+        background-color: var(--bg-body);
+        color: var(--ink);
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+
+      .hero-bar {
+        background: linear-gradient(135deg, #1a3cf6 0%, #00a9e0 75%);
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+      }
+
+      .summary-panel {
+        position: sticky;
+        top: 1.5rem;
+        z-index: 1020;
+      }
+
+      .summary-card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--border-soft);
+        border-radius: 1.5rem;
+        box-shadow: var(--shadow-soft);
+        backdrop-filter: blur(10px);
+      }
+
+      .badge-ink {
+        background-color: var(--ink);
+        border-radius: 999px;
+        padding: 0.5rem 0.85rem;
+      }
+
+      .badge-cyan {
+        background-color: var(--cyan);
+        color: #003e5a;
+        border-radius: 999px;
+        padding: 0.5rem 0.85rem;
+      }
+
+      .badge-green {
+        background-color: var(--green);
+        border-radius: 999px;
+        padding: 0.5rem 0.85rem;
+      }
+
+      .badge-dark {
+        border-radius: 999px;
+        padding: 0.5rem 0.85rem;
+        background-color: var(--dark) !important;
+      }
+
+      .badge {
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+
+      .investment-controls .form-control,
+      .investment-controls .form-select {
+        border: 1px solid transparent;
+        background-color: var(--bg-plate);
+        box-shadow: var(--shadow-soft);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+      }
+
+      .investment-controls .form-control:hover,
+      .investment-controls .form-select:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-hover);
+      }
+
+      .investment-controls .form-control:focus,
+      .investment-controls .form-select:focus {
+        border-color: rgba(17, 93, 255, 0.4);
+        box-shadow: 0 0 0 0.35rem rgba(17, 93, 255, 0.15);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #2557f4 0%, #0ea9f9 100%);
+        border: none;
+        box-shadow: var(--shadow-soft);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-hover);
+      }
+
+      .summary-card .badge + .badge {
+        margin-left: 0.35rem;
+      }
+
+      @media (max-width: 575.98px) {
+        .summary-panel {
+          top: 0.75rem;
+        }
+        .summary-card {
+          border-radius: 1rem;
+        }
+      }
+
+      .property-card {
+        border: 1px solid var(--border-soft);
+        border-radius: 1.25rem;
+        box-shadow: var(--shadow-soft);
+        background: var(--bg-plate);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .property-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+      }
+
+      .property-card .card-title {
+        color: var(--ink);
+      }
+
+      .property-card .card-text {
+        color: #30415d;
+      }
+
+      .skeleton {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.25rem;
+        background: linear-gradient(
+          90deg,
+          rgba(230, 235, 245, 0.6) 25%,
+          rgba(255, 255, 255, 0.9) 37%,
+          rgba(230, 235, 245, 0.6) 63%
+        );
+        background-size: 400% 100%;
+        animation: shimmer 1.4s ease-in-out infinite;
+        min-height: 180px;
+        border: 1px solid var(--border-soft);
+        box-shadow: var(--shadow-soft);
+      }
+
+      .skeleton-line {
+        height: 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.55);
+        margin-bottom: 0.5rem;
+      }
+
+      .skeleton-line:last-child {
+        margin-bottom: 0;
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      #empty {
+        border: 1px dashed rgba(21, 28, 47, 0.2);
+        border-radius: 1.5rem;
+        background-color: rgba(255, 255, 255, 0.7);
+      }
+
+      #alert .alert {
+        border-radius: 1rem;
+        box-shadow: var(--shadow-soft);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero-bar text-white py-5 mb-5">
+      <div class="container">
+        <h1 class="display-6 fw-semibold mb-2">Microburbs Property Explorer</h1>
+        <p class="lead mb-0 opacity-75">
+          Track property mix, pricing momentum, and inventory across Australian suburbs to guide investment strategy.
+        </p>
+      </div>
+    </header>
+
+    <main class="container pb-5">
+      <section class="investment-controls row g-3 align-items-end mb-4">
+        <div class="col-lg-5">
+          <label for="suburbInput" class="form-label text-secondary">Suburb</label>
+          <input
+            id="suburbInput"
+            type="text"
+            class="form-control form-control-lg rounded-pill shadow-sm"
+            placeholder="Belmont North"
+            aria-describedby="suburbHelp"
+            required
+          >
+          <div id="suburbHelp" class="form-text">Enter a suburb to surface property analytics.</div>
+        </div>
+        <div class="col-lg-4">
+          <label for="typeSelect" class="form-label text-secondary">Property Type</label>
+          <select id="typeSelect" class="form-select form-select-lg rounded-pill shadow-sm" aria-label="Property type">
+            <option value="">Any</option>
+            <option value="house">House</option>
+            <option value="apartment">Apartment</option>
+            <option value="townhouse">Townhouse</option>
+            <option value="unit">Unit</option>
+          </select>
+        </div>
+        <div class="col-lg-3 col-sm-6 d-grid gap-3">
+          <button id="fetchBtn" class="btn btn-primary btn-lg rounded-pill shadow-sm">Fetch Properties</button>
+          <button id="clearBtn" class="btn btn-outline-secondary btn-lg rounded-pill shadow-sm">Clear</button>
+        </div>
+        <div class="col-lg-12 col-sm-6 d-flex flex-wrap gap-2 justify-content-lg-end justify-content-sm-start">
+          <div class="btn-group shadow-sm rounded-pill" role="group" aria-label="Sort controls">
+            <button id="sortAsc" type="button" class="btn btn-outline-primary rounded-start-pill">Sort Asc</button>
+            <button id="sortDesc" type="button" class="btn btn-outline-primary rounded-end-pill">Sort Desc</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary-panel">
+        <div class="summary-card border rounded-4 shadow-sm p-3">
+          <div id="summary" class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="text-muted">Awaiting search.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-4">
+        <div id="alert"></div>
+        <div id="empty" class="text-center text-muted py-5 d-none">
+          <p class="fs-5 mb-1">No listings available.</p>
+          <p class="mb-0">Adjust the filters or try a neighbouring suburb.</p>
+        </div>
+        <div id="cards" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4"></div>
+      </section>
+    </main>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
