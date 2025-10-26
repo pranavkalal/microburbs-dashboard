@@ -9,7 +9,17 @@
   const cardsEl = document.getElementById("cards");
   const emptyEl = document.getElementById("empty");
   const alertEl = document.getElementById("alert");
+  const modalEl = document.getElementById("propertyModal");
+  const modalTitleEl = document.getElementById("propertyModalTitle");
+  const modalSubtitleEl = document.getElementById("propertyModalSubtitle");
+  const modalMetricsEl = document.getElementById("propertyModalMetrics");
+  const modalDescriptionEl = document.getElementById("propertyModalDescription");
+  const modalMetaEl = document.getElementById("propertyModalMeta");
+  const modalRawAttributesEl = document.getElementById("propertyModalRawAttributes");
+  const modalLinkEl = document.getElementById("propertyModalLink");
   let currentResults = [];
+  let visibleResults = [];
+  let modalInstance;
 
   const currencyFormatter = new Intl.NumberFormat("en-AU", {
     style: "currency",
@@ -150,6 +160,13 @@
   const badge = (label, value, className) =>
     `<span class="badge ${className}">${label}: ${value}</span>`;
 
+  const ensureModal = () => {
+    if (!modalInstance) {
+      modalInstance = new bootstrap.Modal(modalEl);
+    }
+    return modalInstance;
+  };
+
   const renderSummary = ({ suburb, count, medianPrice, averagePrice, propertyType }) => {
     if (!suburb && !count && medianPrice == null && averagePrice == null) {
       summaryEl.innerHTML = '<span class="text-muted">Awaiting search.</span>';
@@ -204,6 +221,7 @@
     clearCards();
     cardsEl.classList.add("d-none");
     emptyEl.classList.remove("d-none");
+    visibleResults = [];
   };
 
   const hideEmptyState = () => {
@@ -272,6 +290,8 @@
     "bedrooms",
     "beds",
     "bedroom",
+    "attributes.bedrooms",
+    "attributes.beds",
     "details.bedrooms",
     "metrics.bedrooms",
   ];
@@ -280,6 +300,8 @@
     "bathrooms",
     "baths",
     "bathroom",
+    "attributes.bathrooms",
+    "attributes.baths",
     "details.bathrooms",
     "metrics.bathrooms",
   ];
@@ -337,9 +359,10 @@
   const renderCards = (items) => {
     hideEmptyState();
     cardsEl.innerHTML = "";
+    visibleResults = items.slice(0, 12);
 
     const fragment = document.createDocumentFragment();
-    items.slice(0, 12).forEach((item) => {
+    visibleResults.forEach((item, index) => {
       const col = document.createElement("div");
       col.className = "col";
 
@@ -349,28 +372,271 @@
       const bathrooms = extractBathrooms(item);
       const priceText =
         priceValue != null ? currencyFormatter.format(priceValue) : "Price unavailable";
+      const bedsText = bedrooms ?? "—";
+      const bathsText = bathrooms ?? "—";
 
-      col.innerHTML = `
-        <div class="property-card card h-100">
-          <div class="card-body">
-            <h5 class="card-title">${address}</h5>
-            <p class="card-text mb-2">${priceText}</p>
-            <ul class="list-inline mb-0 small text-muted">
-              <li class="list-inline-item me-3">
-                <span class="fw-semibold">Beds:</span> ${bedrooms ?? "—"}
-              </li>
-              <li class="list-inline-item">
-                <span class="fw-semibold">Baths:</span> ${bathrooms ?? "—"}
-              </li>
-            </ul>
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "property-card card h-100 text-start w-100";
+      button.innerHTML = `
+        <div class="card-body d-flex flex-column gap-2">
+          <h5 class="card-title mb-1">${address}</h5>
+          <span class="price-chip align-self-start">${priceText}</span>
+          <div class="property-meta-row text-muted d-flex gap-3">
+            <span>Beds: <strong>${bedsText}</strong></span>
+            <span>Baths: <strong>${bathsText}</strong></span>
           </div>
         </div>
       `;
+      button.onclick = () => openDetail(item);
 
+      col.append(button);
       fragment.append(col);
     });
 
     cardsEl.append(fragment);
+  };
+
+  const formatDate = (value) => {
+    if (!value) {
+      return null;
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+    return new Intl.DateTimeFormat("en-AU", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(parsed);
+  };
+
+  const DESCRIPTION_KEYS = ["attributes.description", "description"];
+  const PROPERTY_TYPE_KEYS = ["property_type", "attributes.property_type", "type"];
+  const LISTING_DATE_KEYS = ["listing_date", "listed_at", "date"];
+  const GARAGE_KEYS = [
+    "attributes.garage_spaces",
+    "garage_spaces",
+    "car_spaces",
+    "carports",
+    "parking",
+  ];
+  const LAND_SIZE_KEYS = ["attributes.land_size", "land_size", "lot_size"];
+  const BUILDING_SIZE_KEYS = ["attributes.building_size", "building_size"];
+  const AREA_NAME_KEYS = ["area_name", "address.full", "address.display"];
+
+  const formatSizeText = (raw) => {
+    if (raw == null || raw === "") {
+      return null;
+    }
+    if (typeof raw === "number") {
+      return `${numberFormatter.format(raw)} m²`;
+    }
+    const numeric = toNumber(raw);
+    if (numeric != null) {
+      if (typeof raw === "string" && raw.toLowerCase().includes("ha")) {
+        return `${numberFormatter.format(numeric)} ha`;
+      }
+      if (typeof raw === "string" && raw.toLowerCase().includes("acre")) {
+        return `${numberFormatter.format(numeric)} acres`;
+      }
+      if (typeof raw === "string" && raw.toLowerCase().includes("m")) {
+        return `${numberFormatter.format(numeric)} m²`;
+      }
+      return numberFormatter.format(numeric);
+    }
+    return toText(raw);
+  };
+
+  const setDescriptionContent = (container, description) => {
+    container.innerHTML = "";
+    if (!description) {
+      return;
+    }
+    const heading = document.createElement("h6");
+    heading.className = "fw-semibold mb-2";
+    heading.textContent = "Description";
+    container.append(heading);
+
+    description
+      .split(/\n{2,}/)
+      .map((segment) => segment.trim())
+      .filter(Boolean)
+      .forEach((paragraph) => {
+        const p = document.createElement("p");
+        p.className = "mb-2";
+        p.textContent = paragraph.replace(/\n+/g, " ");
+        container.append(p);
+      });
+  };
+
+  const setMetricsContent = (container, metrics) => {
+    container.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+    metrics
+      .filter((metric) => metric && metric.value != null && metric.value !== "")
+      .forEach((metric) => {
+        const col = document.createElement("div");
+        col.className = "col-sm-6";
+        col.innerHTML = `
+          <div class="modal-metrics-tile">
+            <div class="modal-metrics-label">${metric.label}</div>
+            <div class="modal-metrics-value">${metric.value}</div>
+          </div>
+        `;
+        fragment.append(col);
+      });
+    if (!fragment.children.length) {
+      container.classList.add("d-none");
+    } else {
+      container.classList.remove("d-none");
+      container.append(fragment);
+    }
+  };
+
+  const setMetaContent = (container, metaItems) => {
+    container.innerHTML = "";
+    const filtered = metaItems.filter(
+      (item) => item && item.value != null && item.value !== ""
+    );
+    if (!filtered.length) {
+      container.classList.add("d-none");
+      return;
+    }
+    container.classList.remove("d-none");
+    const snippet = filtered
+      .map((item) => `<span class="me-3"><strong>${item.label}:</strong> ${item.value}</span>`)
+      .join("");
+    container.innerHTML = snippet;
+  };
+
+  const createRawAttributesHtml = (attributes) => {
+    if (!attributes || typeof attributes !== "object") {
+      return "";
+    }
+    const entries = Object.entries(attributes).filter(([key, value]) => {
+      if (typeof key === "string" && key.toLowerCase() === "description") {
+        return false;
+      }
+      if (value == null || value === "") {
+        return false;
+      }
+      if (typeof value === "object" && !Object.keys(value).length) {
+        return false;
+      }
+      return true;
+    });
+    if (!entries.length) {
+      return "";
+    }
+    const rows = entries
+      .map(([key, value]) => {
+        const displayKey = key
+          .replace(/[_-]+/g, " ")
+          .replace(/(^\w|\s\w)/g, (s) => s.toUpperCase());
+        const displayValue =
+          typeof value === "object" ? JSON.stringify(value, null, 2) : String(value);
+        return `
+          <tr>
+            <th scope="row" class="text-muted fw-normal">${displayKey}</th>
+            <td class="text-break">${displayValue}</td>
+          </tr>
+        `;
+      })
+      .join("");
+    return `
+      <h6 class="fw-semibold mb-2">Additional Attributes</h6>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  };
+
+  const openPropertyModal = (item) => {
+    if (!item) {
+      return;
+    }
+
+    try {
+      sessionStorage.setItem("selectedProperty", JSON.stringify(item));
+    } catch (error) {
+      console.warn("Unable to persist selected property to session storage.", error);
+    }
+
+    const address = extractAddress(item);
+    const areaName = toText(extractFirst(item, AREA_NAME_KEYS));
+    const priceValue = extractPrice(item);
+    const priceText = priceValue != null ? currencyFormatter.format(priceValue) : null;
+    const bedrooms = extractBedrooms(item);
+    const bathrooms = extractBathrooms(item);
+    const propertyTypeValue = extractFirst(item, PROPERTY_TYPE_KEYS);
+    const propertyTypeText = toText(propertyTypeValue);
+    const listingDateRaw = extractFirst(item, LISTING_DATE_KEYS);
+    const listingDateText = formatDate(listingDateRaw);
+    const garageRaw = extractFirst(item, GARAGE_KEYS);
+    const garageValue = toNumber(garageRaw);
+    const garageText =
+      garageValue != null ? numberFormatter.format(garageValue) : toText(garageRaw);
+    const landRaw = extractFirst(item, LAND_SIZE_KEYS);
+    const landText = formatSizeText(landRaw);
+    const buildingRaw = extractFirst(item, BUILDING_SIZE_KEYS);
+    const buildingText = formatSizeText(buildingRaw);
+    const descriptionRaw = toText(extractFirst(item, DESCRIPTION_KEYS));
+
+    const latitude = toNumber(resolve(item, "coordinates.latitude"));
+    const longitude = toNumber(resolve(item, "coordinates.longitude"));
+
+    modalTitleEl.textContent = address;
+    modalSubtitleEl.textContent = areaName || "";
+
+    setMetaContent(modalMetaEl, [
+      { label: "Listing Date", value: listingDateText },
+      { label: "Latitude", value: latitude != null ? numberFormatter.format(latitude) : null },
+      {
+        label: "Longitude",
+        value: longitude != null ? numberFormatter.format(longitude) : null,
+      },
+    ]);
+
+    setMetricsContent(modalMetricsEl, [
+      { label: "Price", value: priceText },
+      { label: "Bedrooms", value: bedrooms ?? "—" },
+      { label: "Bathrooms", value: bathrooms ?? "—" },
+      { label: "Garage Spaces", value: garageText ?? "—" },
+      { label: "Land Size", value: landText ?? "—" },
+      { label: "Building Size", value: buildingText ?? "—" },
+      { label: "Property Type", value: propertyTypeText ?? "—" },
+    ]);
+
+    setDescriptionContent(modalDescriptionEl, descriptionRaw);
+
+    const attributesHtml = createRawAttributesHtml(resolve(item, "attributes"));
+    modalRawAttributesEl.innerHTML = attributesHtml;
+    modalRawAttributesEl.classList.toggle("d-none", !attributesHtml);
+
+    try {
+      const encoded = encodeURIComponent(JSON.stringify(item));
+      modalLinkEl.href = `/property?data=${encoded}`;
+    } catch (error) {
+      modalLinkEl.href = "/property";
+    }
+
+    ensureModal().show();
+  };
+
+  const openDetail = (item) => {
+    if (!item) {
+      return;
+    }
+    try {
+      localStorage.setItem("selectedProperty", JSON.stringify(item));
+    } catch (error) {
+      console.warn("Unable to persist property to local storage.", error);
+    }
+    window.location.href = "/property";
   };
 
   const handleSuccess = (suburb, propertyType, list) => {

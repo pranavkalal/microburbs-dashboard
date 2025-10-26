@@ -145,6 +145,23 @@
         color: #30415d;
       }
 
+      .price-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        background-color: rgba(26, 60, 246, 0.1);
+        color: #1a3cf6;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      .property-meta-row {
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+      }
+
       .skeleton {
         position: relative;
         overflow: hidden;
@@ -191,6 +208,38 @@
       #alert .alert {
         border-radius: 1rem;
         box-shadow: var(--shadow-soft);
+      }
+
+      .property-card {
+        cursor: pointer;
+      }
+
+      .property-card:focus-visible {
+        outline: 2px solid var(--cyan);
+        outline-offset: 4px;
+      }
+
+      .modal-metrics-tile {
+        border-radius: 1rem;
+        background-color: var(--bg-plate);
+        border: 1px solid var(--border-soft);
+        box-shadow: var(--shadow-soft);
+        padding: 1rem 1.2rem;
+        height: 100%;
+      }
+
+      .modal-metrics-label {
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        color: rgba(33, 37, 51, 0.6);
+        margin-bottom: 0.25rem;
+      }
+
+      .modal-metrics-value {
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: var(--ink);
       }
     </style>
   </head>
@@ -257,6 +306,36 @@
         <div id="cards" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4"></div>
       </section>
     </main>
+
+    <div
+      class="modal fade"
+      id="propertyModal"
+      tabindex="-1"
+      aria-labelledby="propertyModalTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header border-0">
+            <div>
+              <h5 class="modal-title fw-semibold" id="propertyModalTitle"></h5>
+              <p id="propertyModalSubtitle" class="mb-0 text-muted small"></p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="propertyModalMeta" class="mb-3 text-muted small"></div>
+            <div id="propertyModalMetrics" class="row g-3"></div>
+            <div id="propertyModalDescription" class="mt-4"></div>
+            <div id="propertyModalRawAttributes" class="mt-4"></div>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            <a id="propertyModalLink" class="btn btn-primary" href="#">View Detail Page</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

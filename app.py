@@ -1,5 +1,8 @@
 import json
 import math
+import os
+import threading
+import webbrowser
 from flask import Flask, jsonify, render_template, request, Response
 import requests
 
@@ -46,6 +49,11 @@ def add_cors_headers(response: Response) -> Response:
 @app.route("/")
 def index() -> str:
     return render_template("index.html")
+
+
+@app.route("/property")
+def property_detail() -> str:
+    return render_template("detail.html")
 
 
 @app.route("/api/properties")
@@ -106,4 +114,12 @@ def proxy_properties() -> Response:
 
 
 if __name__ == "__main__":
+    def _launch_browser() -> None:
+        try:
+            webbrowser.open_new("http://127.0.0.1:5000/")
+        except Exception as exc:  # pragma: no cover - best effort
+            app.logger.warning("Unable to open browser automatically: %s", exc)
+
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        threading.Timer(1.0, _launch_browser).start()
     app.run(debug=True)

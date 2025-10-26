@@ -12,9 +12,8 @@ python app.py
 Navigate to `http://127.0.0.1:5000` and start querying suburbs.
 
 ## UI Preview
-![Overview](docs/overview.png)
-![Summary Badges](docs/summary-badges.png)
-![Property Grid](docs/property-grid.png)
+![Overview](https://raw.githubusercontent.com/pranavkalal/microburbs-dashboard/main/docs/overview.png)
+![Property Grid](https://raw.githubusercontent.com/pranavkalal/microburbs-dashboard/main/docs/property-grid.png)
 
 ## What You’ll See
 - Sticky summary badges with listing count, suburb name, median price (with average), and active property type.
