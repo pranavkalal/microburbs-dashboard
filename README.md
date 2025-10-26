@@ -13,7 +13,9 @@ Navigate to `http://127.0.0.1:5000` and start querying suburbs.
 
 ## UI Preview
 ![Overview](https://raw.githubusercontent.com/pranavkalal/microburbs-dashboard/main/docs/overview.png)
-![Property Grid](https://raw.githubusercontent.com/pranavkalal/microburbs-dashboard/main/docs/property-grid.png)
+![Property List](https://raw.githubusercontent.com/pranavkalal/microburbs-dashboard/main/docs/property-list.png)
+![Property Detail](https://raw.githubusercontent.com/pranavkalal/microburbs-dashboard/main/docs/property-detail-1.png)
+![Property Detail Metrics](https://raw.githubusercontent.com/pranavkalal/microburbs-dashboard/main/docs/property-detail-2.png)
 
 ## What You’ll See
 - Sticky summary badges with listing count, suburb name, median price (with average), and active property type.
